@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth";
 import prisma from "@repo/db/client";
+import { P2PTransactions } from "../../components/p2pTransactions";
 
 export async function p2pTransfer(to: string, amount: number) {
     const session = await getServerSession(authOptions);
@@ -60,4 +61,41 @@ export async function p2pTransfer(to: string, amount: number) {
     return {
         message: "Transfer successful"
     }
+}
+export async function getP2PTransfers() {
+    const session = await getServerSession(authOptions);
+
+    const userId = session?.user?.id;
+
+    if (!userId) {
+        return [];
+    }
+
+    const transfers = await prisma.p2pTransfer.findMany({
+        where: {
+            OR: [
+                { fromUserId: Number(userId) },
+                { toUserId: Number(userId) }
+            ]
+        },
+        include: {
+            fromUser: {
+                select: {
+                    name: true,
+                    number: true
+                }
+            },
+            toUser: {
+                select: {
+                    name: true,
+                    number: true
+                }
+            }
+        },
+        orderBy: {
+            timestamp: "desc"
+        }
+    });
+
+    return transfers;
 }
