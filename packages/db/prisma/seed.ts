@@ -53,15 +53,6 @@ async function main() {
       auth_type: "Credentials",
       kycStatus: "VERIFIED",
       balance: { create: { amount: 0, locked: 0 } },
-      bankAccounts: {
-        create: {
-          holderName: "Ravi Kumar",
-          accountNoEnc: "SEED-PLACEHOLDER", 
-          last4: "4321",
-          ifsc: "HDFC0001234",
-          isPrimary: true,
-        },
-      },
     },
   });
 

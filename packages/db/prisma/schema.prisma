@@ -48,24 +48,32 @@ model Balance {
 }
 
 model Merchant {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
-  phone        String?   @unique
-  password     String?   // null for Google-only merchants
-  name         String?
-  businessName String?
-  auth_type    AuthType
-  kycStatus    KycStatus @default(PENDING)
-  pan          String?   // encrypt/mask in Phase 3
-  gstin        String?
-  createdAt    DateTime  @default(now())
-
-  balance      MerchantBalance?
-  bankAccounts BankAccount[]
-  devices      Soundbox[]
-  orders       SoundboxOrder[]
-  payments     MerchantPayment[]
-  settlements  Settlement[]
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  phone           String?   @unique
+  password        String?
+  name            String?
+  businessName    String?
+  auth_type       AuthType
+  createdAt       DateTime  @default(now())
+  kycStatus       KycStatus @default(PENDING)
+  businessType    String?
+  addressLine     String?
+  city            String?
+  state           String?
+  pincode         String?
+  panEnc          String?   // AES-GCM ciphertext
+  panLast4        String?   // only part ever displayed
+  gstin           String?
+  kycSubmittedAt  DateTime?
+  kycReviewedAt   DateTime?
+  kycRejectReason String?
+  balance         MerchantBalance?
+  bankAccounts    BankAccount[]
+  devices         Soundbox[]
+  orders          SoundboxOrder[]
+  payments        MerchantPayment[]
+  settlements     Settlement[]
 }
 model MerchantBalance {
   id         Int      @id @default(autoincrement())
@@ -76,17 +84,19 @@ model MerchantBalance {
 }
 
 model BankAccount {
-  id           Int        @id @default(autoincrement())
+  id           Int          @id @default(autoincrement())
   merchantId   Int
   holderName   String
-  accountNoEnc String     // encrypted account number (Phase 3)
-  last4        String     // only thing the UI ever shows
+  accountNoEnc String       // AES-GCM ciphertext...
+  last4        String
   ifsc         String
-  isPrimary    Boolean    @default(false)
-  createdAt    DateTime   @default(now())
-  merchant     Merchant   @relation(fields: [merchantId], references: [id])
+  fingerprint  String       // HMAC of account+ifsc, detects duplicates without decrypting
+  isPrimary    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  merchant     Merchant     @relation(fields: [merchantId], references: [id])
   settlements  Settlement[]
 
+  @@unique([merchantId, fingerprint])
   @@index([merchantId])
 }
 model SoundboxPlan {
