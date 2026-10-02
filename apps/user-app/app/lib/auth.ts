@@ -1,66 +1,63 @@
 import db from "@repo/db/client";
-import CredentialsProvider from "next-auth/providers/credentials"
+import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
+import { z } from "zod";
+const secret = process.env.NEXTAUTH_SECRET;
+if (!secret || secret.length < 32) {
+    throw new Error("NEXTAUTH_SECRET must be set (32+ chars)");
+}
+
+const loginSchema = z.object({
+    phone: z.string().regex(/^\d{10}$/),
+    password: z.string().min(1).max(72),   
+});
+//seeded vaale can still login
+const newPasswordSchema = z.string().min(8).max(72);
 
 export const authOptions = {
     providers: [
-      CredentialsProvider({
-          name: 'Credentials',
-          credentials: {
-            phone: { label: "Phone number", type: "text", placeholder: "1231231231", required: true },
-            password: { label: "Password", type: "password", required: true }
-          },
-          // TODO: User credentials type from next-aut
-          async authorize(credentials: any) {
-            // Do zod validation, OTP validation here
-            const hashedPassword = await bcrypt.hash(credentials.password, 10);
-            const existingUser = await db.user.findFirst({
-                where: {
-                    number: credentials.phone
-                }
-            });
+        CredentialsProvider({
+            name: "Credentials",
+            credentials: {
+                phone: { label: "Phone number", type: "text", placeholder: "1231231231", required: true },
+                password: { label: "Password", type: "password", required: true },
+            },
+            async authorize(credentials: any) {
+                const parsed = loginSchema.safeParse(credentials);
+                if (!parsed.success) return null;
+                const { phone, password } = parsed.data;
 
-            if (existingUser) {
-                const passwordValidation = await bcrypt.compare(credentials.password, existingUser.password);
-                if (passwordValidation) {
-                    return {
-                        id: existingUser.id.toString(),
-                        name: existingUser.name,
-                        email: existingUser.number
-                    }
+                const existingUser = await db.user.findUnique({ where: { number: phone } });
+                if (existingUser) {
+                    const ok = await bcrypt.compare(password, existingUser.password);
+                    return ok
+                        ? { id: existingUser.id.toString(), name: existingUser.name, email: existingUser.number }
+                        : null;
                 }
-                return null;
-            }
 
-            try {
-                const user = await db.user.create({
-                    data: {
-                        number: credentials.phone,
-                        password: hashedPassword
-                    }
-                });
-            
-                return {
-                    id: user.id.toString(),
-                    name: user.name,
-                    email: user.number
+                if (!newPasswordSchema.safeParse(password).success) return null;
+                try {
+                    const user = await db.user.create({
+                        data: {
+                            number: phone,
+                            password: await bcrypt.hash(password, 10),
+                            Balance: { create: { amount: 0, locked: 0 } },  // every user needs a balance row
+                        },
+                    });
+                    return { id: user.id.toString(), name: user.name, email: user.number };
+                } catch (e) {
+                    console.error("signup failed");
+                    return null;
                 }
-            } catch(e) {
-                console.error(e);
-            }
-
-            return null
-          },
-        })
+            },
+        }),
     ],
-    secret: process.env.JWT_SECRET || "secret",
+    secret,
+    session: { strategy: "jwt" as const, maxAge: 60 * 60 * 24 },
     callbacks: {
-        // TODO: can u fix the type here? Using any is bad
         async session({ token, session }: any) {
-            session.user.id = token.sub
-
-            return session
-        }
-    }
-  }
-  
+            session.user.id = token.sub;
+            return session;
+        },
+    },
+};
