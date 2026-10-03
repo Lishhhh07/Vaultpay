@@ -74,6 +74,7 @@ model Merchant {
   orders          SoundboxOrder[]
   payments        MerchantPayment[]
   settlements     Settlement[]
+  publicId        String    @unique @default(uuid())
 }
 model MerchantBalance {
   id         Int      @id @default(autoincrement())
@@ -152,6 +153,7 @@ model MerchantPayment {
   fromUser       User      @relation(fields: [fromUserId], references: [id])
 
   @@index([merchantId, createdAt])
+  @@index([fromUserId, createdAt])
 }
 
 // Merchant to bank one

@@ -3,6 +3,8 @@ import db from "@repo/db/client";
 import { requireMerchant } from "../../../lib/session";
 import { kycView, settleKycIfDue } from "../../../lib/kyc";
 import { StatusBadge } from "../../../components/StatusBadge";
+import { formatINR } from "@repo/payments-core/money";
+import { startOfTodayIST } from "../../../lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,11 @@ export default async function DashboardPage() {
       _count: { select: { bankAccounts: true } },
     },
   });
+     const today = await db.merchantPayment.aggregate({
+     where: { merchantId, status: "SUCCESS", createdAt: { gte: startOfTodayIST() } },
+     _sum: { amount: true },
+     _count: true,
+   });
   if (!m) return null;
 
   const view = kycView(m);
@@ -35,8 +42,12 @@ export default async function DashboardPage() {
       <h1 className="text-3xl font-bold text-[#6a51a6]">
         Welcome, {m.businessName ?? m.name ?? "merchant"}
       </h1>
-
-      <div className="grid gap-4 sm:grid-cols-2">
+   <div className="bg-white border rounded-xl p-6">
+     <div className="text-sm text-gray-500">Today&apos;s collection</div>
+     <div className="text-2xl font-semibold">{formatINR(today._sum.amount ?? 0)}</div>
+     <div className="text-xs text-gray-500">{today._count} payments</div>
+   </div>
+      <div className="grid gap-4 sm:grid-cols-3">
         <div className="bg-white border rounded-xl p-6">
           <div className="text-sm text-gray-500">Balance</div>
           <div className="text-2xl font-semibold">

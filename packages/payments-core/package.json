@@ -1,0 +1,13 @@
+{
+  "name": "@repo/payments-core",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./money": "./src/money.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.11.0",
+    "@repo/db": "*"
+  }
+}
