@@ -74,6 +74,8 @@ model Merchant {
   orders          SoundboxOrder[]
   payments        MerchantPayment[]
   settlements     Settlement[]
+  autoSettle      Boolean   @default(false)
+  otpChallenges   OtpChallenge[]
   publicId        String    @unique @default(uuid())
 }
 model MerchantBalance {
@@ -96,6 +98,7 @@ model BankAccount {
   createdAt    DateTime     @default(now())
   merchant     Merchant     @relation(fields: [merchantId], references: [id])
   settlements  Settlement[]
+    removedAt    DateTime?
 
   @@unique([merchantId, fingerprint])
   @@index([merchantId])
@@ -168,6 +171,9 @@ model Settlement {
   processedAt   DateTime?
   merchant      Merchant         @relation(fields: [merchantId], references: [id])
   bankAccount   BankAccount      @relation(fields: [bankAccountId], references: [id])
+  idempotencyKey String?  @unique
+  source         String   @default("MANUAL")   // MANUAL | AUTO
+  failureReason  String?
 
   @@index([merchantId, createdAt])
 }
@@ -182,6 +188,20 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   @@index([actorType, actorId, createdAt])
+}
+model OtpChallenge {
+  id         String    @id @default(uuid())
+  merchantId Int
+  purpose    String    // SETTLEMENT | AUTO_SETTLE | BANK_REMOVE
+  codeHash   String    // HMAC, never the code itself
+  binding    String    // HMAC of the exact action this code authorises
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+  merchant   Merchant  @relation(fields: [merchantId], references: [id])
+
+  @@index([merchantId, createdAt])
 }
 
 enum AuthType {
