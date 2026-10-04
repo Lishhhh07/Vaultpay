@@ -14,6 +14,7 @@ export default function Layout({
                 <SidebarItem href={"/transfer"} icon={<TransferIcon />} title="Transfer" />
                 <SidebarItem href={"/transactions"} icon={<TransactionsIcon />} title="Transactions" />
                 <SidebarItem href={"/p2p"} icon={<P2PTransferIcon />} title="P2P Transfer" />
+                <SidebarItem href={"/pin"} icon={<TransactionsIcon />} title="Security" />
 
             </div>
         </div>

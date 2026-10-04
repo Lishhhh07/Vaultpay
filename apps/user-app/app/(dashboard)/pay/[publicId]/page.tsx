@@ -21,12 +21,13 @@ export default async function PayPage({
   const session = await getServerSession(authOptions);
   const userId = Number(session?.user?.id);
 
-  const [merchant, balance] = await Promise.all([
+    const [merchant, balance, userRow] = await Promise.all([
     prisma.merchant.findUnique({
       where: { publicId: params.publicId.toLowerCase() },
       select: { publicId: true, businessName: true, name: true, kycStatus: true },
     }),
     Number.isInteger(userId) ? prisma.balance.findUnique({ where: { userId } }) : null,
+    Number.isInteger(userId) ? prisma.user.findUnique({ where: { id: userId }, select: { pinHash: true } }) : null,
   ]);
   if (!merchant) notFound();
 
@@ -53,6 +54,7 @@ export default async function PayPage({
         merchantName={name}
         balancePaise={balance?.amount ?? 0}
         initialAmount={paise ? (paise / 100).toFixed(2) : ""}
+        hasPin={!!userRow?.pinHash}
       />
     </div>
   );

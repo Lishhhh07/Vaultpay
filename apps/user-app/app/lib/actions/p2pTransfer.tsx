@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "../auth";
 import prisma from "@repo/db/client";
+import { verifyPin } from "../pin";
 
 const MAX_P2P_PAISE = 100000 * 100;
 const p2pSchema = z.object({
@@ -11,12 +12,16 @@ const p2pSchema = z.object({
         .int("Invalid amount")
         .positive("Amount must be greater than 0")
         .max(MAX_P2P_PAISE, "Amount too large"),
+    pin: z.string().regex(/^\d{4,6}$/, "Enter a valid 4-6 digit PIN"),
 });
 
-export async function p2pTransfer(to: string, amount: number) {
+export async function p2pTransfer(to: string, amount: number, pin: string) {
     const session = await getServerSession(authOptions);
     const from = session?.user?.id;
     if (!from) return { message: "Error while sending" };
+    if (!/^\d{4,6}$/.test(pin ?? "")) return { message: "Enter your transaction PIN" };
+    const pinCheck = await verifyPin(Number(from), pin);
+    if (!pinCheck.ok) return { message: pinCheck.message };
 
     const parsed = p2pSchema.safeParse({ to, amount });
     if (!parsed.success) return { message: parsed.error.issues[0]?.message ?? "Invalid input" };
