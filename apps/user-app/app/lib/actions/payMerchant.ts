@@ -1,6 +1,7 @@
 "use server"
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { verifyPin } from "../pin";
 import { z } from "zod";
 import prisma from "@repo/db/client";
 import { payMerchant } from "@repo/payments-core";
@@ -12,6 +13,7 @@ const schema = z.object({
   amount: z.string().max(12),
   idempotencyKey: z.string().regex(/^[A-Za-z0-9_-]{16,64}$/),
   note: z.string().max(60).optional(),
+  pin: z.string().regex(/^\d{4,6}$/),
 });
 
 export type PayResult =
@@ -30,6 +32,8 @@ export async function payMerchantAction(input: unknown): Promise<PayResult> {
 
   const paise = rupeesToPaise(parsed.data.amount);
   if (paise === null) return { ok: false, code: "INVALID_AMOUNT", message: "Enter a valid amount (up to 2 decimals)" };
+     const pin = await verifyPin(userId, parsed.data.pin);
+   if (!pin.ok) return { ok: false, code: pin.code, message: pin.message };
 
   const merchant = await prisma.merchant.findUnique({
     where: { publicId: parsed.data.merchantPublicId },

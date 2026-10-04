@@ -6,10 +6,10 @@ const ITEMS: { href?: string; label: string }[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/transactions", label: "Transactions" },
   { href: "/qr", label: "QR code" },
+  { href: "/settlements", label: "Settlements" },
   { href: "/kyc", label: "KYC" },
   { href: "/bank", label: "Bank accounts" },
   { label: "Soundbox" },
-  { label: "Settlements" },
 ];
 export function Sidebar() {
   const pathname = usePathname();

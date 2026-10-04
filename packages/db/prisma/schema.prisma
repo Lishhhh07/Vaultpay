@@ -16,6 +16,9 @@ model User {
   password          String
   OnRampTransaction OnRampTransaction[]
   Balance           Balance[]
+  pinHash        String?
+  pinAttempts    Int       @default(0)
+  pinLockedUntil DateTime?
   sentTransfers     p2pTransfer[]       @relation(name: "FromUserRelation")
   receivedTransfers p2pTransfer[]       @relation(name: "ToUserRelation")
   merchantPayments  MerchantPayment[]
@@ -25,6 +28,7 @@ model p2pTransfer {
   amount     Int
   timestamp  DateTime
   fromUserId Int
+
   fromUser   User     @relation(name: "FromUserRelation", fields: [fromUserId], references: [id])
   toUserId   Int
   toUser     User     @relation(name: "ToUserRelation", fields: [toUserId], references: [id])
@@ -168,6 +172,7 @@ model Settlement {
   processedAt   DateTime?
   merchant      Merchant         @relation(fields: [merchantId], references: [id])
   bankAccount   BankAccount      @relation(fields: [bankAccountId], references: [id])
+  idempotencyKey String?  @unique
 
   @@index([merchantId, createdAt])
 }
@@ -183,6 +188,7 @@ model AuditLog {
 
   @@index([actorType, actorId, createdAt])
 }
+
 
 enum AuthType {
   Google

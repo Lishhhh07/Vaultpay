@@ -8,12 +8,13 @@ import { payMerchantAction, type PayResult } from "../../../lib/actions/payMerch
 type Receipt = Extract<PayResult, { ok: true }>;
 
 export function PayForm({
-  merchantPublicId, merchantName, balancePaise, initialAmount,
+  merchantPublicId, merchantName, balancePaise, initialAmount, hasPin,
 }: {
   merchantPublicId: string;
   merchantName: string;
   balancePaise: number;
   initialAmount: string;
+    hasPin: boolean;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<"form" | "confirm" | "done">("form");
@@ -22,7 +23,7 @@ export function PayForm({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
-
+   const [pin, setPin] = useState("");
   // One key per payment attempt. Reused on retry, so a double-click or flaky network can't charge twice.
   const keyRef = useRef<string | null>(null);
   const paise = rupeesToPaise(amount);
@@ -46,17 +47,21 @@ export function PayForm({
         merchantPublicId,
         amount,
         idempotencyKey: keyRef.current,
+        pin,
         note: note.trim() || undefined,
       });
-      if (r.ok) {
+            if (r.ok) {
         keyRef.current = null;
+        setPin("");
         setReceipt(r);
         setStep("done");
         router.refresh();
-      } else if (r.code === "INTERNAL") {
-        setError(r.message); // stay on confirm; same key is reused on retry
+      } else if (["INTERNAL", "WRONG_PIN", "PIN_LOCKED", "NO_PIN"].includes(r.code)) {
+        setPin("");
+        setError(r.message); // stay on the confirm screen; nothing was charged
       } else {
         keyRef.current = null;
+        setPin("");
         setError(r.message);
         setStep("form");
       }
@@ -92,18 +97,30 @@ export function PayForm({
         <div className="text-3xl font-bold">{formatINR(paise)}</div>
         <div className="text-sm">to <b>{merchantName}</b></div>
         {note && <div className="text-sm text-gray-600">Note: {note}</div>}
+            {hasPin ? (
+          <input
+            type="password" inputMode="numeric" autoComplete="off" maxLength={6} value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+            placeholder="Transaction PIN"
+            className="bg-gray-50 border border-gray-300 text-sm rounded-lg block w-48 p-2.5 tracking-widest"
+          />
+        ) : (
+          <p className="text-sm bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            Set a transaction PIN to pay. <Link href="/pin" className="text-[#6a51a6] underline">Set PIN</Link>
+          </p>
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex gap-3">
           <button
             onClick={confirm}
-            disabled={busy}
+            disabled={busy || !hasPin || pin.length < 4}
             className="text-white bg-[#6a51a6] hover:bg-[#5a4290] disabled:opacity-50 rounded-lg px-5 py-2.5 text-sm"
           >
             {busy ? "Paying..." : `Pay ${formatINR(paise)}`}
           </button>
           <button
             onClick={() => setStep("form")}
-            disabled={busy}
+            disabled={busy || !hasPin || pin.length < 4}
             className="border border-gray-300 hover:bg-gray-50 disabled:opacity-50 rounded-lg px-5 py-2.5 text-sm"
           >
             Edit
