@@ -1,4 +1,5 @@
 "use server"
+import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import prisma from "@repo/db/client";
@@ -22,14 +23,25 @@ export async function signupUser(input: unknown): Promise<{ ok: true } | { ok: f
 
     const exists = await prisma.user.findUnique({ where: { number: phone }, select: { id: true } });
     if (exists) return { ok: false, error: DUPLICATE };
-
+        const bonusRupees = Number(process.env.WELCOME_BONUS_RUPEES ?? "0");
+    const bonus = Number.isFinite(bonusRupees) && bonusRupees > 0 && bonusRupees <= 10000
+        ? Math.round(bonusRupees * 100) : 0;
     try {
-        await prisma.user.create({
+                await prisma.user.create({
             data: {
                 name,
                 number: phone,
                 password: await bcrypt.hash(password, 12),
-                Balance: { create: { amount: 0, locked: 0 } }, // every user needs a wallet row
+                Balance: { create: { amount: bonus, locked: 0 } },
+                // gives the money a visible source in the transfer history
+                ...(bonus > 0 ? {
+                    OnRampTransaction: {
+                        create: {
+                            amount: bonus, status: "Success", startTime: new Date(),
+                            provider: "Welcome bonus", token: crypto.randomUUID(),
+                        },
+                    },
+                } : {}),
             },
         });
     } catch (e: any) {
