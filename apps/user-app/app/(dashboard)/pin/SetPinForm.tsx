@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { setPinAction } from "../../lib/actions/pin";
 
-export function SetPinForm() {
+export function SetPinForm({ hasPassword }: { hasPassword: boolean }) {
   const [f, setF] = useState({ password: "", pin: "", confirmPin: "" });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -25,8 +25,9 @@ export function SetPinForm() {
 
   return (
     <form onSubmit={submit} className="space-y-3" autoComplete="off">
-      <input type="password" placeholder="Your login password" value={f.password}
-        onChange={(e) => setF({ ...f, password: e.target.value })} className={cls} autoComplete="current-password" />
+       
+     {hasPassword && <input type="password" placeholder="Your login password" value={f.password}
+        onChange={(e) => setF({ ...f, password: e.target.value })} className={cls} autoComplete="current-password" />}
       <input type="password" inputMode="numeric" placeholder="New PIN (4-6 digits)" value={f.pin}
         onChange={(e) => setF({ ...f, pin: digits(e.target.value) })} className={cls} autoComplete="off" />
       <input type="password" inputMode="numeric" placeholder="Confirm PIN" value={f.confirmPin}

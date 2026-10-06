@@ -10,7 +10,7 @@ export type PinCheck =
 
 async function guarded(
   userId: number,
-  check: (u: { password: string; pinHash: string | null }) => Promise<boolean>,
+  check: (u: { password: string | null; pinHash: string | null }) => Promise<boolean>,
   label: string
 ): Promise<PinCheck> {
   const now = new Date();
@@ -62,4 +62,4 @@ export async function verifyPin(userId: number, pin: string): Promise<PinCheck> 
 }
 
 export const verifyLoginPassword = (userId: number, password: string) =>
-  guarded(userId, (u) => bcrypt.compare(password, u.password), "password");
+  guarded(userId, async (u) => !!u.password && bcrypt.compare(password, u.password), "password");

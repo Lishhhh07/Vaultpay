@@ -10,7 +10,7 @@ const WEAK = new Set(["1234", "4321", "0123", "123456", "654321", "012345"]);
 
 const schema = z
   .object({
-    password: z.string().min(1).max(72),
+    password: z.string().max(72),
     pin: z.string().regex(/^\d{4,6}$/, "PIN must be 4 to 6 digits"),
     confirmPin: z.string(),
   })
@@ -28,8 +28,11 @@ export async function setPinAction(input: unknown): Promise<{ ok: true } | { ok:
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
 
-  const check = await verifyLoginPassword(userId, parsed.data.password);
-  if (!check.ok) return { ok: false, error: check.message };
+    const row = await prisma.user.findUnique({ where: { id: userId }, select: { password: true } });
+  if (row?.password) {
+    const check = await verifyLoginPassword(userId, parsed.data.password);
+    if (!check.ok) return { ok: false, error: check.message };
+  }
 
   await prisma.user.update({
     where: { id: userId },

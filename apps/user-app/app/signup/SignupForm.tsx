@@ -48,6 +48,13 @@ export function SignupForm() {
                     className="w-full text-white bg-gray-800 hover:bg-gray-900 disabled:opacity-50 rounded-lg px-5 py-2.5 text-sm">
                     {busy ? "Creating account..." : "Sign up"}
                 </button>
+                                <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <span className="flex-1 border-t" /> or <span className="flex-1 border-t" />
+                </div>
+                <button type="button" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                    className="w-full border border-gray-300 hover:bg-gray-50 rounded-lg px-5 py-2.5 text-sm">
+                    Sign up with Google
+                </button>
                 <p className="text-sm text-gray-600">
                     Already have an account? <Link href="/signin" className="text-[#6a51a6] underline">Sign in</Link>
                 </p>

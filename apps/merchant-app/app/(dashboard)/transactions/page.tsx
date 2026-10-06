@@ -108,7 +108,7 @@ export default async function TransactionsPage({
                 <td className="p-3 whitespace-nowrap">{formatIST(p.createdAt)}</td>
                 <td className="p-3">
                   {p.fromUser.name ?? "Customer"}
-                  <div className="text-xs text-gray-500">XXXXXX{p.fromUser.number.slice(-4)}</div>
+                  <div className="text-xs text-gray-500">{p.fromUser.number ? `XXXXXX${p.fromUser.number.slice(-4)}` : "Google user"}</div>
                 </td>
                 <td className="p-3 text-gray-600">{p.note ?? "-"}</td>
                 <td className="p-3 text-right font-medium">{formatINR(p.amount)}</td>
