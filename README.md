@@ -5,7 +5,11 @@ A full-stack, Paytm-style payments project built as a **Turborepo monorepo**. Cu
 > **Learning project.** KYC verification, banks and payouts are simulated. No real money is ever moved.
 
 ## Live demo
+for demo: 
 
+          USER: phno: 1111111111 pwd: alice
+
+          MERCHANT: merchant@demo.com, pwd: merchant123
 | App | Who it's for | URL |
 |---|---|---|
 | **Customer app** | Wallet, P2P, pay merchants | https://paytm2-tau.vercel.app/ |
