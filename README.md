@@ -24,7 +24,7 @@ A full-stack, Paytm-style payments project built as a **Turborepo monorepo**. Cu
 ## Features
 
 ### Customer app
-- Sign up and sign in with phone number and password
+- Sign up and sign in with phone number and password ((Google sign-in also supported)
 - Wallet balance with a configurable welcome bonus
 - Peer-to-peer transfers
 - Pay merchants by scanning their QR code or opening a payment link, with a review and confirm step and a receipt
