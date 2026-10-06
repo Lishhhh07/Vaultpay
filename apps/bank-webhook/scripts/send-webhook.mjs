@@ -9,7 +9,8 @@ const ts = Date.now().toString();
 const sig = crypto.createHmac("sha256", process.env.BANK_WEBHOOK_SECRET)
   .update(`${ts}.${body}`).digest("hex");
 
-const r = await fetch("http://localhost:3003/hdfcWebhook", {
+const url = process.env.WEBHOOK_URL ?? "http://localhost:3003/hdfcWebhook";
+const r = await fetch(url, {
   method: "POST",
   headers: { "content-type": "application/json", "x-timestamp": ts, "x-signature": sig },
   body,

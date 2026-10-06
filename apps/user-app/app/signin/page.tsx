@@ -5,6 +5,10 @@ function safePath(p?: string) {
     return p;
 }
 
-export default function Page({ searchParams }: { searchParams: { callbackUrl?: string } }) {
-    return <SigninForm callbackUrl={safePath(searchParams.callbackUrl)} />;
+export default function Page({
+    searchParams,
+}: {
+    searchParams: { callbackUrl?: string; error?: string };
+}) {
+    return <SigninForm callbackUrl={safePath(searchParams.callbackUrl)} authError={searchParams.error} />;
 }

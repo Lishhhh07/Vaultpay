@@ -46,7 +46,7 @@ export default async function DashboardPage() {
         }),
     ]);
 
-    const masked = (n: string) => "XXXXXX" + n.slice(-4);
+    const masked = (n: string | null) => (n ? "XXXXXX" + n.slice(-4) : "no number yet");
 
     const rows: Row[] = [
         ...merchantPays.map((p) => ({
